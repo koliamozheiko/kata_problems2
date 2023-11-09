@@ -8,7 +8,6 @@ public class Main {
         UserService userDao = new UserServiceImpl();
 
         userDao.createUsersTable();
-        userDao.removeUserById(4);
 
         userDao.saveUser("Name1", "LastName1", (byte) 20);
         userDao.saveUser("Name2", "LastName2", (byte) 25);
@@ -16,6 +15,7 @@ public class Main {
         userDao.saveUser("Name4", "LastName4", (byte) 38);
 
         System.out.println(userDao.getAllUsers());
+
         userDao.cleanUsersTable();
         userDao.dropUsersTable();
 
