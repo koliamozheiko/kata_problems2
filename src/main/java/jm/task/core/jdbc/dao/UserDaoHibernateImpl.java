@@ -6,6 +6,7 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -25,7 +26,7 @@ public class UserDaoHibernateImpl implements UserDao {
                     + "id BIGINT AUTO_INCREMENT PRIMARY KEY,"
                     + "name VARCHAR(45) NOT NULL,"
                     + "last_name VARCHAR(45) NOT NULL,"
-                    + "age INT(3) NOT NULL)").executeUpdate();
+                    + "age TINYINT NOT NULL)").executeUpdate();
             session.getTransaction().commit();
         } catch (Exception e) {
             e.printStackTrace();
@@ -54,7 +55,6 @@ public class UserDaoHibernateImpl implements UserDao {
                 transaction.commit();
                 System.out.printf("User с именем - %s был добавлен в базу данных\n", name);
             } catch (Exception e) {
-                transaction.rollback();
                 e.printStackTrace();
             }
         }
@@ -64,17 +64,18 @@ public class UserDaoHibernateImpl implements UserDao {
     public void removeUserById(long id) {
         try (Session session = sessionFactory.getCurrentSession()) {
             Transaction transaction = session.beginTransaction();
-
             try {
-                if (session.get(User.class, id) != null) {
-                    session.delete(session.get(User.class, id));
-                    session.getTransaction().commit();
-                } else {
-                    transaction.rollback();
-                    System.out.printf("User с id %d не найден\n", id);
-                }
+                session.delete(session.load(User.class, id));
+                session.getTransaction().commit();
             } catch (Exception e) {
-                transaction.rollback();
+                try {
+                    if (transaction != null && transaction.isActive()) {
+                        transaction.rollback();
+                    }
+                } catch (Exception rbe) {
+                    rbe.printStackTrace();
+                }
+                System.out.printf("User с id %d не найден\n", id);
                 e.printStackTrace();
             }
         }
@@ -84,13 +85,13 @@ public class UserDaoHibernateImpl implements UserDao {
     public List<User> getAllUsers() {
         try (Session session = sessionFactory.getCurrentSession()) {
             session.beginTransaction();
-            List users = session.createQuery("SELECT o FROM User o").list();
+            List users = session.createQuery("FROM User").list();
             session.getTransaction().commit();
             return users;
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("Exception");
         }
+        return new ArrayList<>();
     }
 
     @Override
